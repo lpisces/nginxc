@@ -43,6 +43,7 @@ type StaticData struct {
 }
 
 var staticData StaticData
+var viperStatic *viper.Viper = viper.New()
 var staticTemplate string = `
 {{if ne .Port "80"}}
 {{if .HTTPRedirect}}
@@ -107,18 +108,18 @@ https example:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		staticData = StaticData{
-			SSL:               viper.GetBool("ssl"),
-			HTTP2:             viper.GetBool("http2"),
-			HTTPRedirect:      viper.GetBool("http-redirect"),
-			Port:              viper.GetString("port"),
-			ServerNames:       viper.GetString("server-names"),
-			ServerName:        strings.Split(viper.GetString("server-names"), " ")[0],
-			SSLCertificate:    viper.GetString("ssl-certificate"),
-			SSLCertificateKey: viper.GetString("ssl-certificate-key"),
-			WebRoot:           viper.GetString("web-root"),
+			SSL:               viperStatic.GetBool("ssl"),
+			HTTP2:             viperStatic.GetBool("http2"),
+			HTTPRedirect:      viperStatic.GetBool("http-redirect"),
+			Port:              viperStatic.GetString("port"),
+			ServerNames:       viperStatic.GetString("server-names"),
+			ServerName:        strings.Split(viperStatic.GetString("server-names"), " ")[0],
+			SSLCertificate:    viperStatic.GetString("ssl-certificate"),
+			SSLCertificateKey: viperStatic.GetString("ssl-certificate-key"),
+			WebRoot:           viperStatic.GetString("web-root"),
 		}
 
-		if viper.GetBool("debug") {
+		if viperStatic.GetBool("debug") {
 			fmt.Printf("%v\n", staticData)
 		}
 
@@ -128,14 +129,14 @@ https example:
 		}
 
 		t := template.Must(template.New("static").Parse(staticTemplate))
-		if len(viper.GetString("output")) == 0 {
+		if len(viperStatic.GetString("output")) == 0 {
 			err := t.Execute(os.Stdout, staticData)
 			if err != nil {
 				fmt.Printf("%v", err)
 				os.Exit(1)
 			}
 		} else {
-			output, err := os.OpenFile(viper.GetString("output"), os.O_RDWR|os.O_CREATE, 0755)
+			output, err := os.OpenFile(viperStatic.GetString("output"), os.O_RDWR|os.O_CREATE, 0755)
 			if err != nil {
 				fmt.Printf("%v", err)
 				os.Exit(1)
@@ -155,41 +156,41 @@ func init() {
 
 	// debug
 	staticCmd.Flags().Bool("debug", false, "debug mode")
-	viper.BindPFlag("debug", staticCmd.Flags().Lookup("debug"))
+	viperStatic.BindPFlag("debug", staticCmd.Flags().Lookup("debug"))
 
 	// ssl
 	staticCmd.Flags().Bool("ssl", true, "enable ssl")
-	viper.BindPFlag("ssl", staticCmd.Flags().Lookup("ssl"))
+	viperStatic.BindPFlag("ssl", staticCmd.Flags().Lookup("ssl"))
 
 	// http2
 	staticCmd.Flags().Bool("http2", true, "enable http2")
-	viper.BindPFlag("http2", staticCmd.Flags().Lookup("http2"))
+	viperStatic.BindPFlag("http2", staticCmd.Flags().Lookup("http2"))
 
 	// port
 	staticCmd.Flags().String("port", "443", "listen port")
-	viper.BindPFlag("port", staticCmd.Flags().Lookup("port"))
+	viperStatic.BindPFlag("port", staticCmd.Flags().Lookup("port"))
 
 	// server name
 	staticCmd.Flags().String("server-names", "default_server", "server names")
-	viper.BindPFlag("server-names", staticCmd.Flags().Lookup("server-names"))
+	viperStatic.BindPFlag("server-names", staticCmd.Flags().Lookup("server-names"))
 
 	// ssl certificate
 	staticCmd.Flags().String("ssl-certificate", "", "ssl certificate")
-	viper.BindPFlag("ssl-certificate", staticCmd.Flags().Lookup("ssl-certificate"))
+	viperStatic.BindPFlag("ssl-certificate", staticCmd.Flags().Lookup("ssl-certificate"))
 
 	// ssl certificate key
 	staticCmd.Flags().String("ssl-certificate-key", "", "ssl certificate key")
-	viper.BindPFlag("ssl-certificate-key", staticCmd.Flags().Lookup("ssl-certificate-key"))
+	viperStatic.BindPFlag("ssl-certificate-key", staticCmd.Flags().Lookup("ssl-certificate-key"))
 
 	// http redirect
 	staticCmd.Flags().Bool("http-redirect", false, "http request to be redirected to https")
-	viper.BindPFlag("http-redirect", staticCmd.Flags().Lookup("http-redirect"))
+	viperStatic.BindPFlag("http-redirect", staticCmd.Flags().Lookup("http-redirect"))
 
 	// root
 	staticCmd.Flags().String("web-root", "/usr/share/nginx/html", "web root")
-	viper.BindPFlag("web-root", staticCmd.Flags().Lookup("web-root"))
+	viperStatic.BindPFlag("web-root", staticCmd.Flags().Lookup("web-root"))
 
 	// output
 	staticCmd.Flags().String("output", "", "save configuration file")
-	viper.BindPFlag("output", staticCmd.Flags().Lookup("output"))
+	viperStatic.BindPFlag("output", staticCmd.Flags().Lookup("output"))
 }

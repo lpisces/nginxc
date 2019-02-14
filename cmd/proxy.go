@@ -46,6 +46,7 @@ type NginxData struct {
 }
 
 var nginxData NginxData
+var viperProxy *viper.Viper = viper.New()
 var temp string = `
 upstream local_port_{{.OriginPort}}{
   server {{.OriginHost}}:{{.OriginPort}};
@@ -146,21 +147,21 @@ https example:
 	Run: func(cmd *cobra.Command, args []string) {
 
 		nginxData = NginxData{
-			SSL:               viper.GetBool("ssl"),
-			HTTP2:             viper.GetBool("http2"),
-			HTTPRedirect:      viper.GetBool("http-redirect"),
-			Port:              viper.GetString("port"),
-			ServerNames:       viper.GetString("server-names"),
-			ServerName:        strings.Split(viper.GetString("server-names"), " ")[0],
-			SSLCertificate:    viper.GetString("ssl-certificate"),
-			SSLCertificateKey: viper.GetString("ssl-certificate-key"),
-			OriginHost:        viper.GetString("origin-host"),
-			OriginPort:        viper.GetString("origin-port"),
-			OriginProtocol:    viper.GetString("origin-protocol"),
-			EnableCORS:        viper.GetBool("enable-cors"),
+			SSL:               viperProxy.GetBool("ssl"),
+			HTTP2:             viperProxy.GetBool("http2"),
+			HTTPRedirect:      viperProxy.GetBool("http-redirect"),
+			Port:              viperProxy.GetString("port"),
+			ServerNames:       viperProxy.GetString("server-names"),
+			ServerName:        strings.Split(viperProxy.GetString("server-names"), " ")[0],
+			SSLCertificate:    viperProxy.GetString("ssl-certificate"),
+			SSLCertificateKey: viperProxy.GetString("ssl-certificate-key"),
+			OriginHost:        viperProxy.GetString("origin-host"),
+			OriginPort:        viperProxy.GetString("origin-port"),
+			OriginProtocol:    viperProxy.GetString("origin-protocol"),
+			EnableCORS:        viperProxy.GetBool("enable-cors"),
 		}
 
-		if viper.GetBool("debug") {
+		if viperProxy.GetBool("debug") {
 			fmt.Printf("%v\n", nginxData)
 		}
 
@@ -170,14 +171,14 @@ https example:
 		}
 
 		t := template.Must(template.New("nginx").Parse(temp))
-		if len(viper.GetString("output")) == 0 {
+		if len(viperProxy.GetString("output")) == 0 {
 			err := t.Execute(os.Stdout, nginxData)
 			if err != nil {
 				fmt.Printf("%v", err)
 				os.Exit(1)
 			}
 		} else {
-			output, err := os.OpenFile(viper.GetString("output"), os.O_RDWR|os.O_CREATE, 0755)
+			output, err := os.OpenFile(viperProxy.GetString("output"), os.O_RDWR|os.O_CREATE, 0755)
 			if err != nil {
 				fmt.Printf("%v", err)
 				os.Exit(1)
@@ -197,53 +198,53 @@ func init() {
 
 	// debug
 	proxyCmd.Flags().Bool("debug", false, "debug mode")
-	viper.BindPFlag("debug", proxyCmd.Flags().Lookup("debug"))
+	viperProxy.BindPFlag("debug", proxyCmd.Flags().Lookup("debug"))
 
 	// ssl
 	proxyCmd.Flags().Bool("ssl", true, "enable ssl")
-	viper.BindPFlag("ssl", proxyCmd.Flags().Lookup("ssl"))
+	viperProxy.BindPFlag("ssl", proxyCmd.Flags().Lookup("ssl"))
 
 	// http2
 	proxyCmd.Flags().Bool("http2", true, "enable http2")
-	viper.BindPFlag("http2", proxyCmd.Flags().Lookup("http2"))
+	viperProxy.BindPFlag("http2", proxyCmd.Flags().Lookup("http2"))
 
 	// port
 	proxyCmd.Flags().String("port", "443", "listen port")
-	viper.BindPFlag("port", proxyCmd.Flags().Lookup("port"))
+	viperProxy.BindPFlag("port", proxyCmd.Flags().Lookup("port"))
 
 	// server name
 	proxyCmd.Flags().String("server-names", "default_server", "server names")
-	viper.BindPFlag("server-names", proxyCmd.Flags().Lookup("server-names"))
+	viperProxy.BindPFlag("server-names", proxyCmd.Flags().Lookup("server-names"))
 
 	// ssl certificate
 	proxyCmd.Flags().String("ssl-certificate", "", "ssl certificate")
-	viper.BindPFlag("ssl-certificate", proxyCmd.Flags().Lookup("ssl-certificate"))
+	viperProxy.BindPFlag("ssl-certificate", proxyCmd.Flags().Lookup("ssl-certificate"))
 
 	// ssl certificate key
 	proxyCmd.Flags().String("ssl-certificate-key", "", "ssl certificate key")
-	viper.BindPFlag("ssl-certificate-key", proxyCmd.Flags().Lookup("ssl-certificate-key"))
+	viperProxy.BindPFlag("ssl-certificate-key", proxyCmd.Flags().Lookup("ssl-certificate-key"))
 
 	// origin host
 	proxyCmd.Flags().String("origin-host", "127.0.0.1", "origin host")
-	viper.BindPFlag("origin-host", proxyCmd.Flags().Lookup("origin-host"))
+	viperProxy.BindPFlag("origin-host", proxyCmd.Flags().Lookup("origin-host"))
 
 	// origin port
 	proxyCmd.Flags().String("origin-port", "10000", "origin port")
-	viper.BindPFlag("origin-port", proxyCmd.Flags().Lookup("origin-port"))
+	viperProxy.BindPFlag("origin-port", proxyCmd.Flags().Lookup("origin-port"))
 
 	// origin protocol
 	proxyCmd.Flags().String("origin-protocol", "http", "origin protocol")
-	viper.BindPFlag("origin-protocol", proxyCmd.Flags().Lookup("origin-protocol"))
+	viperProxy.BindPFlag("origin-protocol", proxyCmd.Flags().Lookup("origin-protocol"))
 
 	// http redirect
 	proxyCmd.Flags().Bool("http-redirect", false, "http request to be redirected to https")
-	viper.BindPFlag("http-redirect", proxyCmd.Flags().Lookup("http-redirect"))
+	viperProxy.BindPFlag("http-redirect", proxyCmd.Flags().Lookup("http-redirect"))
 
 	// enable CORS
 	proxyCmd.Flags().Bool("enable-cors", true, "enable CORS")
-	viper.BindPFlag("enable-cors", proxyCmd.Flags().Lookup("enable-cors"))
+	viperProxy.BindPFlag("enable-cors", proxyCmd.Flags().Lookup("enable-cors"))
 
 	// output
 	proxyCmd.Flags().String("output", "", "save configuration file")
-	viper.BindPFlag("output", proxyCmd.Flags().Lookup("output"))
+	viperProxy.BindPFlag("output", proxyCmd.Flags().Lookup("output"))
 }
