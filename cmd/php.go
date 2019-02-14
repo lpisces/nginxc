@@ -78,15 +78,14 @@ server {
 
 	location / {
 		{{if .CORS}}
-    # CORS
-    add_header Access-Control-Allow-Origin *;
-    add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, DELETE, PUT';
-    add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
-    if ($request_method = 'OPTIONS') {
-        return 204;
-    }
+		# CORS
+		add_header Access-Control-Allow-Origin *;
+		add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, DELETE, PUT';
+		add_header Access-Control-Allow-Headers 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+		if ($request_method = 'OPTIONS') {
+			return 204;
+		}
 		{{end}}
-
 		try_files $uri $uri/ /index.php$is_args$args;
 	}
 
@@ -98,6 +97,9 @@ server {
 		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 		include fastcgi_params;
 	}
+
+	access_log  /var/log/nginx/{{.ServerName}}.access.log;
+	error_log  /var/log/nginx/{{.ServerName}}.error.log;
 }
 `
 
@@ -140,7 +142,7 @@ https example:
 			SSLCertificate:    viperPhp.GetString("ssl-certificate"),
 			SSLCertificateKey: viperPhp.GetString("ssl-certificate-key"),
 			WebRoot:           viperPhp.GetString("web-root"),
-			CORS:              viperProxy.GetBool("cors"),
+			CORS:              viperPhp.GetBool("cors"),
 		}
 
 		if viperPhp.GetBool("debug") {
@@ -152,7 +154,7 @@ https example:
 			os.Exit(1)
 		}
 
-		t := template.Must(template.New("static").Parse(staticTemplate))
+		t := template.Must(template.New("php").Parse(phpTemplate))
 		if len(viperPhp.GetString("output")) == 0 {
 			err := t.Execute(os.Stdout, phpData)
 			if err != nil {
@@ -216,7 +218,7 @@ func init() {
 
 	// enable CORS
 	phpCmd.Flags().Bool("cors", true, "enable CORS")
-	viperProxy.BindPFlag("cors", phpCmd.Flags().Lookup("cors"))
+	viperPhp.BindPFlag("cors", phpCmd.Flags().Lookup("cors"))
 
 	// output
 	phpCmd.Flags().String("output", "", "save configuration file")
