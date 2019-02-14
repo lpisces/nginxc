@@ -51,12 +51,14 @@ upstream local_port_{{.OriginPort}}{
   server {{.OriginHost}}:{{.OriginPort}};
 }
 
+{{if ne .Port "80"}}
 {{if .HTTPRedirect}}
 server{
  listen 80;
  server_name {{.ServerNames}};
- rewrite ^/(.*) https://{{.ServerName}}{{if ne .Port "443"}}{{.Port}}{{end}}/$1 redirect;
+ rewrite ^/(.*) https://{{.ServerName}}{{if ne .Port "443"}}:{{.Port}}{{end}}/$1 redirect;
 }
+{{end}}
 {{end}}
 
 server {
@@ -76,9 +78,7 @@ server {
   ssl_session_cache shared:SSL:10m;
   ssl_prefer_server_ciphers on;
 	{{end}}
-
   location / {
-
 		{{if .EnableCORS}}
     # CORS
     add_header Access-Control-Allow-Origin *;
@@ -112,7 +112,7 @@ server {
 // proxyCmd represents the proxy command
 var proxyCmd = &cobra.Command{
 	Use:   "proxy",
-	Short: "Generate configuration file for port proxy.",
+	Short: "Generate configuration for port proxy.",
 	Long: `
 http example:
 
@@ -200,11 +200,11 @@ func init() {
 	viper.BindPFlag("debug", proxyCmd.Flags().Lookup("debug"))
 
 	// ssl
-	proxyCmd.Flags().Bool("ssl", true, "use ssl")
+	proxyCmd.Flags().Bool("ssl", true, "enable ssl")
 	viper.BindPFlag("ssl", proxyCmd.Flags().Lookup("ssl"))
 
 	// http2
-	proxyCmd.Flags().Bool("http2", true, "use http2")
+	proxyCmd.Flags().Bool("http2", true, "enable http2")
 	viper.BindPFlag("http2", proxyCmd.Flags().Lookup("http2"))
 
 	// port
