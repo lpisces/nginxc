@@ -22,7 +22,6 @@ package cmd
 
 import (
 	"fmt"
-	//"github.com/labstack/gommon/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -42,7 +41,7 @@ type NginxData struct {
 	OriginHost        string
 	OriginPort        string
 	OriginProtocol    string
-	EnableCORS        bool
+	CORS              bool
 }
 
 var nginxData NginxData
@@ -80,7 +79,7 @@ server {
   ssl_prefer_server_ciphers on;
 	{{end}}
   location / {
-		{{if .EnableCORS}}
+		{{if .CORS}}
     # CORS
     add_header Access-Control-Allow-Origin *;
     add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, DELETE, PUT';
@@ -125,7 +124,7 @@ http example:
 	--origin-protocol http \
 	--port 80 \
 	--server-names "a.com b.com" \
-	--enable-cors \
+	--cors \
 	--output ./a.com.conf
 
 https example:
@@ -138,7 +137,7 @@ https example:
 	--origin-protocol http \
 	--port 443 \
 	--server-names "a.com b.com" \
-	--enable-cors \
+	--cors \
 	--http-redirect \
 	--ssl-certificate a.cer \
 	--ssl-certificate-key a.key \
@@ -158,7 +157,7 @@ https example:
 			OriginHost:        viperProxy.GetString("origin-host"),
 			OriginPort:        viperProxy.GetString("origin-port"),
 			OriginProtocol:    viperProxy.GetString("origin-protocol"),
-			EnableCORS:        viperProxy.GetBool("enable-cors"),
+			CORS:              viperProxy.GetBool("cors"),
 		}
 
 		if viperProxy.GetBool("debug") {
@@ -241,8 +240,8 @@ func init() {
 	viperProxy.BindPFlag("http-redirect", proxyCmd.Flags().Lookup("http-redirect"))
 
 	// enable CORS
-	proxyCmd.Flags().Bool("enable-cors", true, "enable CORS")
-	viperProxy.BindPFlag("enable-cors", proxyCmd.Flags().Lookup("enable-cors"))
+	proxyCmd.Flags().Bool("cors", true, "enable CORS")
+	viperProxy.BindPFlag("cors", proxyCmd.Flags().Lookup("cors"))
 
 	// output
 	proxyCmd.Flags().String("output", "", "save configuration file")
